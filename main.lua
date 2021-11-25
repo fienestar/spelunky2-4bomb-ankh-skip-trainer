@@ -1,5 +1,5 @@
 meta.name = '4bomb-ankh-skip-trainer'
-meta.version = '0.1'
+meta.version = '0.2'
 meta.description = 'indicate good position for 4bomb ankh skip'
 meta.author = 'fienestar'
 
@@ -26,15 +26,32 @@ function tint_entity(uid, r, g, b)
 end
 
 function is_ankh_skip_needed(state)
-  return state.theme == THEME.TIDE_POOL and state.world == 4 and state.level == 3
+  return #players ~= 0 and state.theme == THEME.TIDE_POOL and state.world == 4 and state.level == 3
 end
 
-set_callback(function ()
-  if is_ankh_skip_needed(state) then
-    if is_good_position(players[1].uid) then
-      tint_entity(players[1].uid, 0.1, 0.9, 0.1)
-    else
-      tint_entity(players[1].uid, 1, 1, 1)
-    end
+update_tints_cb_id = nil
+
+function update_tints()
+  if is_good_position(players[1].uid) then
+    tint_entity(players[1].uid, 0.1, 0.9, 0.1)
+  else
+    tint_entity(players[1].uid, 1, 1, 1)
   end
-end, ON.FRAME)
+end
+
+function clear_update_tints()
+  if update_tints_cb_id ~= nil then
+    clear_callback(update_tints_cb_id)
+    update_tints_cb_id = nil
+  end
+end
+
+set_callback(clear_update_tints, ON.DEATH)
+set_callback(clear_update_tints, ON.WIN)
+
+set_callback(function()
+  clear_update_tints()
+  if is_ankh_skip_needed(state) then
+    update_tints_cb_id = set_callback(update_tints, ON.FRAME)
+  end
+end, ON.LEVEL)
